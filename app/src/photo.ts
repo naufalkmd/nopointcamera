@@ -1,5 +1,3 @@
-import { useEffect, useState } from 'react';
-import { Asset } from 'expo-asset';
 import { FilterMode, MipmapMode, Skia, type SkImage } from '@shopify/react-native-skia';
 
 // The biggest place a shot is shown (the Print screen) needs about 900x1100 px,
@@ -42,32 +40,4 @@ export function pickPictureSize(sizes: string[]): string | undefined {
     .filter((x): x is { size: string; long: number; short: number } => !!x && Math.abs(x.long / x.short - 4 / 3) < 0.02 && x.short >= 1080)
     .sort((a, b) => a.long * a.short - b.long * b.short);
   return fits[0]?.size;
-}
-
-// Textures used inside Skia (like the film grain) are loaded once and shared.
-const textures = new Map<number, Promise<SkImage | null>>();
-
-function loadTexture(mod: number) {
-  let p = textures.get(mod);
-  if (!p) {
-    p = Asset.fromModule(mod)
-      .downloadAsync()
-      .then((a) => Skia.Data.fromURI(a.localUri ?? a.uri))
-      .then((d) => Skia.Image.MakeImageFromEncoded(d))
-      .catch(() => null);
-    textures.set(mod, p);
-  }
-  return p;
-}
-
-export function useTexture(mod: number) {
-  const [image, setImage] = useState<SkImage | null>(null);
-  useEffect(() => {
-    let live = true;
-    loadTexture(mod).then((img) => live && setImage(img));
-    return () => {
-      live = false;
-    };
-  }, [mod]);
-  return image;
 }

@@ -133,3 +133,16 @@ Check the licence on any LUT, shader or texture pack before shipping it in a com
 3. 6–8 wild shaders for the rare tier: Game Boy dither, thermal, pixel sort, slit-scan, halftone, riso, glitch, kaleidoscope.
 4. The seeded recipe generator with rarity tiers and curated palettes.
 5. Later: segmentation-based effects, then AI transforms for the legendary tier.
+
+## 7. What the app has so far
+
+Built in `app/src/film/`, running on captured photos in Expo Go:
+
+- **Recipe generator** (`recipe.ts`): seeded, with the rarity tiers (85% / 12% / 3%), 12 curated palettes and the rules above (strong grain only on black and white, no light leak with a double exposure, pixel effects skip the film texture). AGAIN picks a new seed.
+- **14 film looks** written as parametric grades instead of LUT files, named by feel rather than after film brands: WARM 400, VIVID 100, SLIDE 50, GREEN 400, GOLDEN, TUNGSTEN, INSTANT, EXPIRED, PUSH 1600, SOFT B&W, BLEACH, BLUE HOUR, PASTEL, INFRARED. Real `.cube` or HaldCLUT files can replace the grade step later (check their licence first).
+- **One shader** (`develop.ts`) for the whole pipeline: grade and tone, one wild effect, vignette, softness, colour fringing, double exposure, grain, halation, light leak and dust.
+- **10 wild effects:** Game Boy dither, thermal, posterize, halftone, riso, glitch, kaleidoscope, swirl, melt (pixel sort) and solarize. Legendary shots get extreme versions.
+- **Tier on the print:** the readout lands in the tier's colour, rare and legendary shots get stronger haptics, and their prints have a silver or gold foil corner. Prints on the Print screen sit at the recipe's slight tilt.
+
+Not yet: the live preview is unfiltered (it needs VisionCamera and a development build), and slit-scan, echo and colour delay need several frames. Depth, segmentation, face mesh and AI transforms are later steps.
+

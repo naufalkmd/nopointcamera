@@ -12,7 +12,6 @@ export const IMAGES = {
   fan: require('../assets/np/fan-blades.png'),
   paper: require('../assets/np/paper-texture.jpg'),
   wall: require('../assets/np/wall-texture.jpg'),
-  grain: require('../assets/np/grain.jpg'),
 } as const;
 
 const local = new Map<number, string>();

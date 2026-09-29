@@ -4,7 +4,7 @@ import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import { ImageFormat, makeImageFromView, type SkImage } from '@shopify/react-native-skia';
-import { LOOKS, type Look } from './looks';
+import type { Recipe } from './film/recipe';
 import { PrintFrame } from './PrintFrame';
 import type { Stage } from './stage';
 import { IMAGES, img } from './images';
@@ -15,13 +15,13 @@ const LABEL = 'BricolageGrotesque_800ExtraBold';
 type Props = {
   stage: Stage;
   photo: SkImage;
-  look: Look;
-  onLook: (look: Look) => void;
+  recipe: Recipe;
+  onAgain: () => void;
   onBack: () => void;
 };
 
 // design/Print.dc.html: the print on a wall, with AGAIN, BACK and SHARE.
-export function PrintScreen({ stage, photo, look, onLook, onBack }: Props) {
+export function PrintScreen({ stage, photo, recipe, onAgain, onBack }: Props) {
   const { u, left, top } = stage;
   const frame = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
@@ -36,8 +36,7 @@ export function PrintScreen({ stage, photo, look, onLook, onBack }: Props) {
 
   const again = () => {
     Haptics.selectionAsync();
-    const rest = LOOKS.filter((x) => x !== look);
-    onLook(rest[Math.floor(Math.random() * rest.length)]);
+    onAgain();
   };
 
   const back = () => {
@@ -77,7 +76,7 @@ export function PrintScreen({ stage, photo, look, onLook, onBack }: Props) {
       <View style={{ position: 'absolute', left, top, width: u(390), height: u(844), paddingTop: u(64), paddingHorizontal: u(20), paddingBottom: u(30) }}>
         <View style={{ flexGrow: 1 }} />
         <View ref={frame} collapsable={false} style={{ alignSelf: 'center' }}>
-          <PrintFrame photo={photo} look={look} k={u(k)} />
+          <PrintFrame photo={photo} recipe={recipe} k={u(k)} tilt />
         </View>
         <View style={{ flexGrow: 1 }} />
 

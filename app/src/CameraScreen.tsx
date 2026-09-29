@@ -12,7 +12,7 @@ import {
 import { CameraView, type CameraType } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Canvas, Oval, RadialGradient, vec, type SkImage } from '@shopify/react-native-skia';
-import { LOOK_NAMES, REEL_DELAYS, rollLook, type Look } from './looks';
+import { TIER_COLORS, makeRecipe, newSeed, recipeName, type Recipe, type Tier } from './film/recipe';
 import { LookPhoto } from './LookPhoto';
 import { PrintFrame } from './PrintFrame';
 import { PrintScreen } from './PrintScreen';
@@ -20,8 +20,22 @@ import { loadShot, pickPictureSize } from './photo';
 import { IMAGES, img } from './images';
 import { useStage } from './stage';
 
-
 const PIXEL = 'Silkscreen_400Regular';
+
+// Gaps between reel ticks, slowing down like a slot machine (ms).
+const REEL_DELAYS = [0, 45, 55, 70, 90, 120, 160];
+
+// The reel teases looks on the way to the real one, leaning on the rare ones for fun.
+function teaser(): Recipe {
+  const roll = Math.random();
+  const tier: Tier = roll < 0.5 ? 'common' : roll < 0.9 ? 'rare' : 'legendary';
+  return makeRecipe(newSeed(), tier);
+}
+
+// Development only: the D-pad cycles a forced tier, so the rare looks can be checked
+// without shooting forty times.
+const FORCE_CYCLE: (Tier | undefined)[] = [undefined, 'rare', 'legendary', 'common'];
+const FORCE_LABELS = ['RANDOM', 'ALL RARE', 'ALL LEGEND', 'ALL COMMON'];
 
 function useLoop(ms: number, easing = Easing.linear) {
   const v = useRef(new Animated.Value(0)).current;
@@ -33,7 +47,17 @@ function useLoop(ms: number, easing = Easing.linear) {
   return v;
 }
 
-type Print = { photo: SkImage; look: Look; n: number };
+type Print = { photo: SkImage; recipe: Recipe; n: number };
+
+// A rare pull should feel like one: stronger haptics as the tier goes up.
+function landHaptics(tier: Tier) {
+  if (tier === 'common') {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    return;
+  }
+  const hits = tier === 'rare' ? 2 : 4;
+  for (let i = 0; i < hits; i++) setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), i * 110);
+}
 
 export function CameraScreen() {
   const stage = useStage();
@@ -42,7 +66,7 @@ export function CameraScreen() {
   const [ready, setReady] = useState(false);
   const [facing, setFacing] = useState<CameraType>('back');
   const [flashOn, setFlashOn] = useState(true);
-  const [review, setReview] = useState<Look | null>(null);
+  const [review, setReview] = useState<Recipe | null>(null);
   const [rolling, setRolling] = useState(false);
   const [shot, setShot] = useState<SkImage | null>(null);
   const [pictureSize, setPictureSize] = useState<string | undefined>();
@@ -51,7 +75,7 @@ export function CameraScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
 
-  const lastFx = useRef<Look>('expired');
+  const force = useRef(0);
   const busy = useRef(false);
   const shots = useRef(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -76,7 +100,8 @@ export function CameraScreen() {
     busy.current = true;
     clearTimers();
     setMessage(null);
-    const { fx, reel } = rollLook(lastFx.current);
+    const recipe = makeRecipe(newSeed(), FORCE_CYCLE[force.current]);
+    const reel = [...Array.from({ length: REEL_DELAYS.length - 1 }, teaser), recipe];
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (flashOn) {
       flash.setValue(1);
@@ -97,11 +122,11 @@ export function CameraScreen() {
       })
       .catch(() => null);
     let t = 0;
-    reel.forEach((look, i) => {
+    reel.forEach((r, i) => {
       t += REEL_DELAYS[i];
       if (i > 0)
         later(() => {
-          setReview(look);
+          setReview(r);
           Haptics.selectionAsync();
         }, t);
     });
@@ -115,12 +140,12 @@ export function CameraScreen() {
       say('NO FILM');
       return;
     }
-    lastFx.current = fx;
     shots.current += 1;
-    setPrint({ photo, look: fx, n: shots.current });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    AccessibilityInfo.announceForAccessibility(`Look: ${LOOK_NAMES[fx].toLowerCase()}`);
-    later(() => setReview(null), 1600);
+    setPrint({ photo, recipe, n: shots.current });
+    landHaptics(recipe.tier);
+    const name = recipeName(recipe).toLowerCase();
+    AccessibilityInfo.announceForAccessibility(recipe.tier === 'common' ? `Look: ${name}` : `${recipe.tier} look: ${name}`);
+    later(() => setReview(null), recipe.tier === 'common' ? 1600 : 2400);
   };
 
   const flip = () => {
@@ -141,11 +166,17 @@ export function CameraScreen() {
     setReview(null);
     setPrinting(true);
   };
-  const dpad = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const dpad = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (!__DEV__) return;
+    force.current = (force.current + 1) % FORCE_CYCLE.length;
+    say(FORCE_LABELS[force.current]);
+  };
 
   const settled = !!review && !rolling;
-  const readout = message ?? (review ? LOOK_NAMES[review] : 'READY');
-  const readoutColor = message || settled ? '#D8FF6A' : rolling ? '#7FA833' : '#3E5A1C';
+  const readout = message ?? (review ? recipeName(review) : 'READY');
+  const landedColor = settled && review ? TIER_COLORS[review.tier] : '#D8FF6A';
+  const readoutColor = message || settled ? landedColor : rolling ? '#7FA833' : '#3E5A1C';
 
   // Board animations, as in design/CameraBuilt.dc.html.
   const drift = useLoop(11000, Easing.inOut(Easing.ease));
@@ -252,7 +283,7 @@ export function CameraScreen() {
               fontSize: u(cutout ? 10 : 12),
               letterSpacing: u(cutout ? 0.5 : 1),
               color: readoutColor,
-              textShadowColor: settled || message ? 'rgba(184, 242, 58, 0.85)' : 'transparent',
+              textShadowColor: settled || message ? landedColor : 'transparent',
               textShadowRadius: u(6),
             }}
           >
@@ -283,7 +314,7 @@ export function CameraScreen() {
           />
           {review && shot ? (
             <View style={{ position: 'absolute', left: 0, top: 0 }}>
-              <LookPhoto photo={shot} look={review} width={u(264)} height={u(330)} />
+              <LookPhoto photo={shot} recipe={review} width={u(264)} height={u(330)} />
             </View>
           ) : null}
           <View
@@ -353,11 +384,9 @@ export function CameraScreen() {
         <PrintScreen
           stage={stage}
           photo={print.photo}
-          look={print.look}
-          onLook={(look) => {
-            lastFx.current = look;
-            setPrint({ ...print, look });
-          }}
+          recipe={print.recipe}
+          // AGAIN picks a new seed for the same photo (FILTERS.md section 2).
+          onAgain={() => setPrint({ ...print, recipe: makeRecipe(newSeed(), FORCE_CYCLE[force.current]) })}
           onBack={() => setPrinting(false)}
         />
       ) : null}
@@ -372,7 +401,7 @@ function SlotPrint({ print, s }: { print: Print; s: number }) {
   }, [drop]);
   return (
     <Animated.View style={{ position: 'absolute', left: 0, top: -139.5 * s, transform: [{ translateY: drop }] }}>
-      <PrintFrame photo={print.photo} look={print.look} k={0.5 * s} />
+      <PrintFrame photo={print.photo} recipe={print.recipe} k={0.5 * s} />
     </Animated.View>
   );
 }

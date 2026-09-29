@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nopointcam photo with random settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 268px; height: 335px; position: relative; overflow: hidden; isolation: isolate; background: #1A1712">
+<img src="../assets/sample-photo.jpg" alt="A small cactus in a terracotta pot on a sunny windowsill" style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; object-fit: cover; filter: {{css}}; transform: {{scene}}">
+<img src="../assets/sample-photo.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; object-fit: cover; opacity: {{ghost}}; filter: {{css}}; transform: {{ghostT}}; mix-blend-mode: screen; pointer-events: none">
+<div style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; background: #1D3FBB; mix-blend-mode: lighten; opacity: {{duo}}; pointer-events: none"></div>
+<div style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; background: #FF5CAD; mix-blend-mode: darken; opacity: {{duo}}; pointer-events: none"></div>
+<svg width="268" height="335" viewBox="0 0 268 335" fill="none" aria-hidden="true" style="display: block; position: absolute; top: 0; left: 0; opacity: {{bokeh}}; mix-blend-mode: screen; filter: blur(1.5px); pointer-events: none">
+<circle cx="40" cy="60" r="20" fill="#FFE3B8" fill-opacity="0.45"></circle>
+<circle cx="214" cy="48" r="28" fill="#FFE9C9" fill-opacity="0.4" stroke="#FFF6E4" stroke-opacity="0.6" stroke-width="2"></circle>
+<circle cx="238" cy="206" r="15" fill="#FFD9A8" fill-opacity="0.45"></circle>
+<circle cx="66" cy="250" r="24" fill="#FFE3B8" fill-opacity="0.35" stroke="#FFF6E4" stroke-opacity="0.5" stroke-width="2"></circle>
+<circle cx="156" cy="82" r="11" fill="#FFF1D6" fill-opacity="0.55"></circle>
+<circle cx="196" cy="290" r="17" fill="#FFE3B8" fill-opacity="0.4"></circle>
+<circle cx="30" cy="312" r="12" fill="#FFF1D6" fill-opacity="0.45"></circle>
+</svg>
+<div style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; background: radial-gradient(circle at 100% 0%, rgba(255, 110, 40, 0.9), rgba(255, 110, 40, 0) 55%), radial-gradient(circle at 0% 100%, rgba(255, 50, 90, 0.55), rgba(255, 50, 90, 0) 45%); mix-blend-mode: screen; opacity: {{leak}}; pointer-events: none"></div>
+<div style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; box-shadow: inset 0 0 70px 14px rgba(20, 14, 8, 0.75); opacity: {{vignette}}; pointer-events: none"></div>
+<img src="../assets/grain.png" alt="" style="position: absolute; top: 0; left: 0; width: 268px; height: 335px; object-fit: cover; mix-blend-mode: overlay; opacity: {{grain}}; pointer-events: none">
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"fx":{"editor":"enum","options":["live","expired","infrared","riso","double","bluehour","dreamy","noir","pastel"],"default":"expired"},"$preview":{"width":268,"height":335}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const base = { css: 'none', scene: 'none', ghost: 0, ghostT: 'none', duo: 0, bokeh: 0, leak: 0, vignette: 0, grain: 0 };
+    const FX = {
+      live: {},
+      expired: { css: 'sepia(0.45) saturate(1.1) contrast(0.9) brightness(1.08) hue-rotate(-10deg)', leak: 0.85, vignette: 0.5, grain: 0.5 },
+      infrared: { css: 'hue-rotate(180deg) saturate(1.45) contrast(1.1) brightness(1.04)', vignette: 0.35, grain: 0.4 },
+      riso: { css: 'grayscale(1) contrast(1.35) brightness(1.05)', duo: 1, grain: 0.7 },
+      double: { css: 'saturate(0.9) contrast(1.05)', ghost: 0.55, ghostT: 'translate(34px, -12px) rotate(9deg) scale(1.15)', vignette: 0.45, grain: 0.45 },
+      bluehour: { css: 'sepia(0.3) hue-rotate(180deg) saturate(1.5) brightness(0.85) contrast(1.15)', vignette: 0.65, grain: 0.5 },
+      dreamy: { css: 'blur(2px) saturate(1.2) brightness(1.08)', bokeh: 1, vignette: 0.25, grain: 0.3 },
+      noir: { css: 'grayscale(1) contrast(1.4) brightness(0.92)', vignette: 0.7, grain: 0.8 },
+      pastel: { css: 'saturate(0.7) brightness(1.12) contrast(0.85) hue-rotate(-15deg)', leak: 0.3, grain: 0.3 }
+    };
+    const fx = this.props.fx ?? 'expired';
+    return { ...base, ...(FX[fx] || FX.expired) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nopointcam print</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:ital,opsz,wght@1,12..96,800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#1F1C2B}
+a{color:#B8F23A}a:hover{color:#D6FF6E}
+.np-wall{background-color:#1F1C2B;background-image:url(../assets/wall-texture.png);background-size:512px 512px}
+.np-key{display:flex;flex-direction:column;align-items:center;gap:2px;padding:0;border:0;background:transparent;cursor:pointer;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.np-key img{transition:transform 0.08s ease}
+.np-key:active img{transform:translateY(3px) scale(0.96)}
+.np-key:focus-visible{outline:2px solid #B8F23A;outline-offset:4px;border-radius:12px}
+</style>
+</helmet>
+<div class="np-wall" style="width: 390px; height: 844px; box-sizing: border-box; padding: 64px 20px 30px; display: flex; flex-direction: column; font-family: 'Bricolage Grotesque', system-ui, sans-serif; overflow: hidden">
+
+<div style="flex-grow: 1"></div>
+
+<div style="align-self: center; zoom: 1.06">
+<dc-import name="Frame" fx="{{fx}}" tilt="0" hint-size="344px,469px"></dc-import>
+</div>
+
+<div style="flex-grow: 1"></div>
+
+<div style="position: relative; align-self: center; width: 340px; height: 128px">
+<button type="button" class="np-key" onClick="{{reroll}}" aria-label="Roll a new look" style="position: absolute; left: 4px; top: 22px">
+<img src="../assets/button-select-start.png" alt="" style="width: 96px; height: 96px">
+<span style="margin-top: -10px; font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #9FA3AE">AGAIN</span>
+</button>
+<a href="CameraBuilt.dc.html" class="np-key" aria-label="B: back to camera" style="position: absolute; left: 172px; top: 34px">
+<img src="../assets/button-ab.png" alt="" style="width: 78px; height: 78px">
+<span style="font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #9FA3AE">BACK</span>
+</a>
+<button type="button" class="np-key" aria-label="A: share" style="position: absolute; left: 254px; top: 4px">
+<img src="../assets/button-ab.png" alt="" style="width: 78px; height: 78px">
+<span style="font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #B8F23A">SHARE</span>
+</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const LOOKS = ['expired', 'infrared', 'riso', 'double', 'bluehour', 'dreamy', 'noir', 'pastel'];
+    const s = this.state || {};
+    const fx = s.fx || 'expired';
+    return {
+      fx,
+      reroll: () => {
+        const rest = LOOKS.filter((x) => x !== fx);
+        this.setState({ fx: rest[Math.floor(Math.random() * rest.length)] });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

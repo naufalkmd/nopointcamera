@@ -7,16 +7,16 @@ import {
   Pressable,
   Text,
   View,
-  useWindowDimensions,
   type ImageSourcePropType,
 } from 'react-native';
 import { CameraView, type CameraType } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { Canvas, Oval, RadialGradient, vec } from '@shopify/react-native-skia';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LOOK_NAMES, REEL_DELAYS, rollLook, type Look } from './looks';
 import { LookPhoto } from './LookPhoto';
 import { PrintFrame } from './PrintFrame';
+import { PrintScreen } from './PrintScreen';
+import { useStage } from './stage';
 
 const BOARD = require('../assets/np/board.png');
 const DPAD = require('../assets/np/dpad.png');
@@ -25,20 +25,6 @@ const BUTTON_PILL = require('../assets/np/button-select-start.png');
 const FAN = require('../assets/np/fan-blades.png');
 
 const PIXEL = 'Silkscreen_400Regular';
-
-// Everything is laid out in the design's 390x844 space and scaled to fit the phone.
-function useStage() {
-  const { width, height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
-  const availH = height - insets.top - insets.bottom;
-  const s = Math.min(width / 390, availH / 844);
-  return {
-    s,
-    u: (n: number) => n * s,
-    left: (width - 390 * s) / 2,
-    top: insets.top + (availH - 844 * s) / 2,
-  };
-}
 
 function useLoop(ms: number, easing = Easing.linear) {
   const v = useRef(new Animated.Value(0)).current;
@@ -53,7 +39,8 @@ function useLoop(ms: number, easing = Easing.linear) {
 type Print = { uri: string; look: Look; n: number };
 
 export function CameraScreen() {
-  const { s, u, left, top } = useStage();
+  const stage = useStage();
+  const { s, u, left, top, cutout } = stage;
   const cam = useRef<CameraView>(null);
   const [ready, setReady] = useState(false);
   const [facing, setFacing] = useState<CameraType>('back');
@@ -63,6 +50,7 @@ export function CameraScreen() {
   const [shotUri, setShotUri] = useState<string | null>(null);
   const [print, setPrint] = useState<Print | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [printing, setPrinting] = useState(false);
 
   const lastFx = useRef<Look>('expired');
   const busy = useRef(false);
@@ -142,9 +130,15 @@ export function CameraScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setFlashOn((f) => !f);
   };
-  const start = () => {
+  const openPrint = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    say('SOON');
+    if (!print) {
+      say('NO PRINTS');
+      return;
+    }
+    clearTimers();
+    setReview(null);
+    setPrinting(true);
   };
   const dpad = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
@@ -239,7 +233,8 @@ export function CameraScreen() {
           importantForAccessibility="no-hide-descendants"
           accessibilityElementsHidden
           style={[
-            box(125, 20, 140, 26),
+            // Beside the Dynamic Island or notch when there is one, centred as in the design otherwise.
+            cutout ? box(262, 20, 96, 26) : box(125, 20, 140, 26),
             {
               borderRadius: u(6),
               backgroundColor: '#0A1406',
@@ -252,8 +247,8 @@ export function CameraScreen() {
           <Text
             style={{
               fontFamily: PIXEL,
-              fontSize: u(12),
-              letterSpacing: u(1),
+              fontSize: u(cutout ? 10 : 12),
+              letterSpacing: u(cutout ? 0.5 : 1),
               color: readoutColor,
               textShadowColor: settled || message ? 'rgba(184, 242, 58, 0.85)' : 'transparent',
               textShadowRadius: u(6),
@@ -272,6 +267,7 @@ export function CameraScreen() {
             mirror={facing === 'front'}
             flash={flashOn ? (facing === 'front' ? 'screen' : 'on') : 'off'}
             animateShutter={false}
+            active={!printing}
             onCameraReady={() => setReady(true)}
           />
           {review && shotUri ? (
@@ -316,18 +312,44 @@ export function CameraScreen() {
         <Key u={u} x={221} y={543} size={70} image={BUTTON_AB} label="B: flip camera" onPress={flip} />
         <Key u={u} x={287} y={497} size={70} image={BUTTON_AB} label="A: take a photo" onPress={shoot} />
         <Key u={u} x={118} y={658} size={64} image={BUTTON_PILL} label="Select: flash" selected={flashOn} onPress={toggleFlash} />
-        <Key u={u} x={183} y={658} size={64} image={BUTTON_PILL} label="Start: prints" onPress={start} />
+        <Key u={u} x={183} y={658} size={64} image={BUTTON_PILL} label="Start: open the latest print" onPress={openPrint} />
         <Marking u={u} x={271} y={608} w={24} size={15}>B</Marking>
         <Marking u={u} x={337} y={562} w={24} size={15}>A</Marking>
         <Marking u={u} x={118} y={716} w={64} size={9}>SELECT</Marking>
         <Marking u={u} x={183} y={716} w={64} size={9}>START</Marking>
 
-        {/* The print dropping out of the slot */}
-        <View pointerEvents="none" style={[box(109, 405, 172, 92), { overflow: 'hidden' }]}>
-          {print ? <SlotPrint key={print.n} print={print} s={s} /> : null}
-          <View style={{ position: 'absolute', left: 0, top: 0, width: u(172), height: u(10), experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0))' }} />
+        {/* The print dropping out of the slot; tap it to open Print */}
+        <View style={[box(109, 405, 172, 92), { overflow: 'hidden' }]}>
+          {print ? (
+            <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: u(172), height: u(92) }}>
+              <SlotPrint key={print.n} print={print} s={s} />
+            </View>
+          ) : null}
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, width: u(172), height: u(10), experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0))' }} />
+          {/* A clear tap area on top, so the Skia canvas in the print can't swallow the touch */}
+          {print ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open the latest print"
+              onPress={openPrint}
+              style={{ position: 'absolute', left: 0, top: 0, width: u(172), height: u(92), backgroundColor: 'rgba(0, 0, 0, 0.001)' }}
+            />
+          ) : null}
         </View>
       </View>
+
+      {printing && print ? (
+        <PrintScreen
+          stage={stage}
+          uri={print.uri}
+          look={print.look}
+          onLook={(look) => {
+            lastFx.current = look;
+            setPrint({ ...print, look });
+          }}
+          onBack={() => setPrinting(false)}
+        />
+      ) : null}
     </View>
   );
 }

@@ -12,7 +12,7 @@ Live design canvas: https://claude.ai/artifact/RhG4uLpNcWfXdtE1xg4fLm
 | `assets/` | Every image the screens use. |
 | `assets/parts/` | Each 3D part as its own transparent PNG with its shadow, plus `manifest.json` giving its position on the 390×844 screen in CSS px. Use these if you want the board as separate layers in the real app. |
 | `scripts/` | The code that makes every asset except the sample photo. |
-| `app/` | The iOS and Android app (Expo, React Native). So far: the camera screen. |
+| `app/` | The iOS and Android app (Expo, React Native). So far: the camera and Print screens. |
 
 The `design/` files are written for the claude.ai design canvas: they load its runtime (`support.js`), so they won't render if opened directly in a browser. Read them as the spec for layout, sizes, colours, animations and interactions. Their image paths point at `../assets/`; `design/artifact-asset-ids.json` maps each file back to its upload id on the canvas.
 

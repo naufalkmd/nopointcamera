@@ -4,11 +4,12 @@ import { useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
 import { Silkscreen_400Regular } from '@expo-google-fonts/silkscreen';
 import { BagelFatOne_400Regular } from '@expo-google-fonts/bagel-fat-one';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CameraScreen } from './src/CameraScreen';
 
 export default function App() {
-  const [fontsLoaded] = useFonts({ Silkscreen_400Regular, BagelFatOne_400Regular });
+  const [fontsLoaded] = useFonts({ Silkscreen_400Regular, BagelFatOne_400Regular, BricolageGrotesque_800ExtraBold });
   const [permission, requestPermission] = useCameraPermissions();
 
   let screen = null;

@@ -11,18 +11,15 @@ import {
 } from 'react-native';
 import { CameraView, type CameraType } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { Canvas, Oval, RadialGradient, vec } from '@shopify/react-native-skia';
+import { Canvas, Oval, RadialGradient, vec, type SkImage } from '@shopify/react-native-skia';
 import { LOOK_NAMES, REEL_DELAYS, rollLook, type Look } from './looks';
 import { LookPhoto } from './LookPhoto';
 import { PrintFrame } from './PrintFrame';
 import { PrintScreen } from './PrintScreen';
+import { loadShot, pickPictureSize } from './photo';
+import { IMAGES, img } from './images';
 import { useStage } from './stage';
 
-const BOARD = require('../assets/np/board.png');
-const DPAD = require('../assets/np/dpad.png');
-const BUTTON_AB = require('../assets/np/button-ab.png');
-const BUTTON_PILL = require('../assets/np/button-select-start.png');
-const FAN = require('../assets/np/fan-blades.png');
 
 const PIXEL = 'Silkscreen_400Regular';
 
@@ -36,7 +33,7 @@ function useLoop(ms: number, easing = Easing.linear) {
   return v;
 }
 
-type Print = { uri: string; look: Look; n: number };
+type Print = { photo: SkImage; look: Look; n: number };
 
 export function CameraScreen() {
   const stage = useStage();
@@ -47,7 +44,9 @@ export function CameraScreen() {
   const [flashOn, setFlashOn] = useState(true);
   const [review, setReview] = useState<Look | null>(null);
   const [rolling, setRolling] = useState(false);
-  const [shotUri, setShotUri] = useState<string | null>(null);
+  const [shot, setShot] = useState<SkImage | null>(null);
+  const [pictureSize, setPictureSize] = useState<string | undefined>();
+  const sizeChecked = useRef(false);
   const [print, setPrint] = useState<Print | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [printing, setPrinting] = useState(false);
@@ -83,16 +82,18 @@ export function CameraScreen() {
       flash.setValue(1);
       Animated.timing(flash, { toValue: 0, duration: 500, delay: 70, useNativeDriver: true }).start();
     }
-    setShotUri(null);
+    setShot(null);
     setRolling(true);
     setReview(reel[0]);
 
-    // The readout rolls while the photo is being taken, which also hides the capture delay.
+    // The readout rolls while the photo is taken and decoded, which also hides the delay.
+    // The shot is decoded once, shrunk, and shared by the viewfinder, the slot and Print.
     const capture = cam.current
       .takePictureAsync({ quality: 0.85 })
-      .then((p) => {
-        setShotUri(p.uri);
-        return p.uri;
+      .then((p) => loadShot(p.uri))
+      .then((img) => {
+        if (img) setShot(img);
+        return img;
       })
       .catch(() => null);
     let t = 0;
@@ -105,18 +106,18 @@ export function CameraScreen() {
         }, t);
     });
     await new Promise((r) => setTimeout(r, t));
-    const uri = await capture;
+    const photo = await capture;
 
     setRolling(false);
     busy.current = false;
-    if (!uri) {
+    if (!photo) {
       setReview(null);
       say('NO FILM');
       return;
     }
     lastFx.current = fx;
     shots.current += 1;
-    setPrint({ uri, look: fx, n: shots.current });
+    setPrint({ photo, look: fx, n: shots.current });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     AccessibilityInfo.announceForAccessibility(`Look: ${LOOK_NAMES[fx].toLowerCase()}`);
     later(() => setReview(null), 1600);
@@ -170,7 +171,7 @@ export function CameraScreen() {
             },
           ]}
         >
-          <Image source={BOARD} style={box(-10, -10, 410, 864)} />
+          <Image fadeDuration={0} source={img(IMAGES.board)} style={box(-10, -10, 410, 864)} />
           <View style={[box(58, 431, 276, 14), { overflow: 'hidden', mixBlendMode: 'screen' }]}>
             <Animated.View style={{ transform: [{ translateX: chase.interpolate({ inputRange: [0, 1], outputRange: [u(-40), u(290)] }) }] }}>
               <Canvas style={{ width: u(36), height: u(14) }}>
@@ -181,7 +182,8 @@ export function CameraScreen() {
             </Animated.View>
           </View>
           <Animated.Image
-            source={FAN}
+            fadeDuration={0}
+            source={img(IMAGES.fan)}
             style={[box(168.4, 579.7, 43.5, 43.5), { transform: [{ rotate: fan.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}
           />
         </Animated.View>
@@ -268,11 +270,20 @@ export function CameraScreen() {
             flash={flashOn ? (facing === 'front' ? 'screen' : 'on') : 'off'}
             animateShutter={false}
             active={!printing}
-            onCameraReady={() => setReady(true)}
+            pictureSize={pictureSize}
+            onCameraReady={() => {
+              setReady(true);
+              if (sizeChecked.current) return;
+              sizeChecked.current = true;
+              cam.current
+                ?.getAvailablePictureSizesAsync()
+                .then((sizes) => setPictureSize(pickPictureSize(sizes)))
+                .catch(() => {});
+            }}
           />
-          {review && shotUri ? (
+          {review && shot ? (
             <View style={{ position: 'absolute', left: 0, top: 0 }}>
-              <LookPhoto uri={shotUri} look={review} width={u(264)} height={u(330)} />
+              <LookPhoto photo={shot} look={review} width={u(264)} height={u(330)} />
             </View>
           ) : null}
           <View
@@ -308,11 +319,11 @@ export function CameraScreen() {
         <Speaker u={u} />
 
         {/* Buttons and their markings */}
-        <Key u={u} x={33} y={503} size={124} image={DPAD} label="D-pad, does nothing" onPress={dpad} />
-        <Key u={u} x={221} y={543} size={70} image={BUTTON_AB} label="B: flip camera" onPress={flip} />
-        <Key u={u} x={287} y={497} size={70} image={BUTTON_AB} label="A: take a photo" onPress={shoot} />
-        <Key u={u} x={118} y={658} size={64} image={BUTTON_PILL} label="Select: flash" selected={flashOn} onPress={toggleFlash} />
-        <Key u={u} x={183} y={658} size={64} image={BUTTON_PILL} label="Start: open the latest print" onPress={openPrint} />
+        <Key u={u} x={33} y={503} size={124} image={img(IMAGES.dpad)} label="D-pad, does nothing" onPress={dpad} />
+        <Key u={u} x={221} y={543} size={70} image={img(IMAGES.buttonAB)} label="B: flip camera" onPress={flip} />
+        <Key u={u} x={287} y={497} size={70} image={img(IMAGES.buttonAB)} label="A: take a photo" onPress={shoot} />
+        <Key u={u} x={118} y={658} size={64} image={img(IMAGES.buttonPill)} label="Select: flash" selected={flashOn} onPress={toggleFlash} />
+        <Key u={u} x={183} y={658} size={64} image={img(IMAGES.buttonPill)} label="Start: open the latest print" onPress={openPrint} />
         <Marking u={u} x={271} y={608} w={24} size={15}>B</Marking>
         <Marking u={u} x={337} y={562} w={24} size={15}>A</Marking>
         <Marking u={u} x={118} y={716} w={64} size={9}>SELECT</Marking>
@@ -341,7 +352,7 @@ export function CameraScreen() {
       {printing && print ? (
         <PrintScreen
           stage={stage}
-          uri={print.uri}
+          photo={print.photo}
           look={print.look}
           onLook={(look) => {
             lastFx.current = look;
@@ -361,7 +372,7 @@ function SlotPrint({ print, s }: { print: Print; s: number }) {
   }, [drop]);
   return (
     <Animated.View style={{ position: 'absolute', left: 0, top: -139.5 * s, transform: [{ translateY: drop }] }}>
-      <PrintFrame uri={print.uri} look={print.look} k={0.5 * s} />
+      <PrintFrame photo={print.photo} look={print.look} k={0.5 * s} />
     </Animated.View>
   );
 }
@@ -388,6 +399,7 @@ function Key({ u, x, y, size, image, label, selected, onPress }: KeyProps) {
     >
       {({ pressed }) => (
         <Image
+            fadeDuration={0}
           source={image}
           style={{
             width: u(size),

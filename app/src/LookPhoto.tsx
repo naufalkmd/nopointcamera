@@ -7,12 +7,14 @@ import {
   Image,
   RadialGradient,
   Rect,
-  useImage,
   vec,
+  type SkImage,
 } from '@shopify/react-native-skia';
 import { RECIPES, colorMatrix, type Look } from './looks';
+import { useTexture } from './photo';
+import { IMAGES } from './images';
 
-const GRAIN = require('../assets/np/grain.png');
+const GRAIN = IMAGES.grain;
 
 // Bokeh circles from design/Photo.dc.html, in its 268x335 space.
 const BOKEH = [
@@ -25,11 +27,10 @@ const BOKEH = [
   { x: 30, y: 312, r: 12, a: 0.45, c: '#FFF1D6' },
 ];
 
-type Props = { uri: string; look: Look; width: number; height: number };
+type Props = { photo: SkImage; look: Look; width: number; height: number };
 
-export function LookPhoto({ uri, look, width: w, height: h }: Props) {
-  const photo = useImage(uri);
-  const grain = useImage(GRAIN);
+export function LookPhoto({ photo, look, width: w, height: h }: Props) {
+  const grain = useTexture(GRAIN);
   const r = RECIPES[look];
   const k = w / 268; // design px -> this size
   const matrix = colorMatrix(look);

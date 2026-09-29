@@ -1,19 +1,40 @@
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { useCameraPermissions } from 'expo-camera';
 import { useFonts } from 'expo-font';
-import { Silkscreen_400Regular } from '@expo-google-fonts/silkscreen';
-import { BagelFatOne_400Regular } from '@expo-google-fonts/bagel-fat-one';
-import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque';
+import { Silkscreen_400Regular } from '@expo-google-fonts/silkscreen/400Regular';
+import { BricolageGrotesque_800ExtraBold } from '@expo-google-fonts/bricolage-grotesque/800ExtraBold';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CameraScreen } from './src/CameraScreen';
+import { preloadImages } from './src/images';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function App() {
-  const [fontsLoaded] = useFonts({ Silkscreen_400Regular, BagelFatOne_400Regular, BricolageGrotesque_800ExtraBold });
+  const [fontsLoaded] = useFonts({
+    Silkscreen_400Regular,
+    BricolageGrotesque_800ExtraBold,
+    // The logo font, trimmed to basic Latin (the full file is 1.5 MB). OFL, see assets/fonts.
+    BagelFatOne_400Regular: require('./assets/fonts/BagelFatOne-Latin.ttf'),
+  });
   const [permission, requestPermission] = useCameraPermissions();
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  useEffect(() => {
+    preloadImages()
+      .catch(() => {})
+      .finally(() => setImagesLoaded(true));
+  }, []);
+
+  const ready = fontsLoaded && imagesLoaded && !!permission;
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
   let screen = null;
-  if (fontsLoaded && permission) {
+  if (ready && permission) {
     screen = permission.granted ? (
       <CameraScreen />
     ) : (

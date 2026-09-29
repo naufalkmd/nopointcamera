@@ -3,27 +3,25 @@ import { BackHandler, Image, Pressable, Text, View, type ImageSourcePropType } f
 import * as Haptics from 'expo-haptics';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
-import { ImageFormat, makeImageFromView } from '@shopify/react-native-skia';
+import { ImageFormat, makeImageFromView, type SkImage } from '@shopify/react-native-skia';
 import { LOOKS, type Look } from './looks';
 import { PrintFrame } from './PrintFrame';
 import type { Stage } from './stage';
+import { IMAGES, img } from './images';
 
-const WALL = require('../assets/np/wall-texture.png');
-const BUTTON_AB = require('../assets/np/button-ab.png');
-const BUTTON_PILL = require('../assets/np/button-select-start.png');
 
 const LABEL = 'BricolageGrotesque_800ExtraBold';
 
 type Props = {
   stage: Stage;
-  uri: string;
+  photo: SkImage;
   look: Look;
   onLook: (look: Look) => void;
   onBack: () => void;
 };
 
 // design/Print.dc.html: the print on a wall, with AGAIN, BACK and SHARE.
-export function PrintScreen({ stage, uri, look, onLook, onBack }: Props) {
+export function PrintScreen({ stage, photo, look, onLook, onBack }: Props) {
   const { u, left, top } = stage;
   const frame = useRef<View>(null);
   const [sharing, setSharing] = useState(false);
@@ -72,21 +70,21 @@ export function PrintScreen({ stage, uri, look, onLook, onBack }: Props) {
       {/* The wall, tiled at 512px like the design */}
       <View style={{ position: 'absolute', left, top, width: u(390), height: u(844) }}>
         {[0, 1].map((row) => (
-          <Image key={row} source={WALL} style={{ position: 'absolute', left: 0, top: u(512 * row), width: u(512), height: u(512) }} />
+          <Image key={row} fadeDuration={0} source={img(IMAGES.wall)} style={{ position: 'absolute', left: 0, top: u(512 * row), width: u(512), height: u(512) }} />
         ))}
       </View>
 
       <View style={{ position: 'absolute', left, top, width: u(390), height: u(844), paddingTop: u(64), paddingHorizontal: u(20), paddingBottom: u(30) }}>
         <View style={{ flexGrow: 1 }} />
         <View ref={frame} collapsable={false} style={{ alignSelf: 'center' }}>
-          <PrintFrame uri={uri} look={look} k={u(k)} />
+          <PrintFrame photo={photo} look={look} k={u(k)} />
         </View>
         <View style={{ flexGrow: 1 }} />
 
         <View style={{ alignSelf: 'center', width: u(340), height: u(128) }}>
-          <LabelledKey u={u} x={4} y={22} size={96} image={BUTTON_PILL} text="AGAIN" labelGap={-10} a11y="Roll a new look" onPress={again} />
-          <LabelledKey u={u} x={172} y={34} size={78} image={BUTTON_AB} text="BACK" a11y="B: back to camera" onPress={back} />
-          <LabelledKey u={u} x={254} y={4} size={78} image={BUTTON_AB} text="SHARE" accent a11y="A: share" disabled={sharing} onPress={share} />
+          <LabelledKey u={u} x={4} y={22} size={96} image={img(IMAGES.buttonPill)} text="AGAIN" labelGap={-10} a11y="Roll a new look" onPress={again} />
+          <LabelledKey u={u} x={172} y={34} size={78} image={img(IMAGES.buttonAB)} text="BACK" a11y="B: back to camera" onPress={back} />
+          <LabelledKey u={u} x={254} y={4} size={78} image={img(IMAGES.buttonAB)} text="SHARE" accent a11y="A: share" disabled={sharing} onPress={share} />
         </View>
       </View>
     </View>
@@ -119,7 +117,7 @@ function LabelledKey({ u, x, y, size, image, text, a11y, labelGap = 2, accent, d
     >
       {({ pressed }) => (
         <>
-          <Image source={image} style={{ width: u(size), height: u(size), transform: pressed ? [{ translateY: u(3) }, { scale: 0.96 }] : [] }} />
+          <Image fadeDuration={0} source={image} style={{ width: u(size), height: u(size), transform: pressed ? [{ translateY: u(3) }, { scale: 0.96 }] : [] }} />
           <Text
             style={{
               marginTop: u(labelGap),

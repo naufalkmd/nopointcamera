@@ -1,11 +1,12 @@
 import { Image, Text, View } from 'react-native';
+import type { SkImage } from '@shopify/react-native-skia';
 import { LookPhoto } from './LookPhoto';
 import type { Look } from './looks';
+import { IMAGES, img } from './images';
 
-const PAPER = require('../assets/np/paper-texture.png');
 
 // design/Frame.dc.html: a 344x469 frame holding a 300x425 paper print. `k` scales it (0.5 in the slot).
-export function PrintFrame({ uri, look, k }: { uri: string; look: Look; k: number }) {
+export function PrintFrame({ photo, look, k }: { photo: SkImage; look: Look; k: number }) {
   const u = (n: number) => n * k;
   return (
     <View style={{ width: u(344), height: u(469) }}>
@@ -23,10 +24,10 @@ export function PrintFrame({ uri, look, k }: { uri: string; look: Look; k: numbe
         }}
       >
         <View style={{ position: 'absolute', width: u(300), height: u(425), opacity: 0.9, mixBlendMode: 'soft-light' }}>
-          <Image source={PAPER} style={{ width: u(300), height: u(425) }} />
+          <Image fadeDuration={0} source={img(IMAGES.paper)} style={{ width: u(300), height: u(425) }} />
         </View>
         <View style={{ position: 'absolute', left: u(16), top: u(16), width: u(268), height: u(335), borderRadius: u(2), overflow: 'hidden' }}>
-          <LookPhoto uri={uri} look={look} width={u(268)} height={u(335)} />
+          <LookPhoto photo={photo} look={look} width={u(268)} height={u(335)} />
         </View>
         <Text
           style={{

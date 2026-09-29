@@ -12,6 +12,7 @@ Live design canvas: https://claude.ai/artifact/RhG4uLpNcWfXdtE1xg4fLm
 | `assets/` | Every image the screens use. |
 | `assets/parts/` | Each 3D part as its own transparent PNG with its shadow, plus `manifest.json` giving its position on the 390×844 screen in CSS px. Use these if you want the board as separate layers in the real app. |
 | `scripts/` | The code that makes every asset except the sample photo. |
+| `app/` | The iOS and Android app (Expo, React Native). So far: the camera screen. |
 
 The `design/` files are written for the claude.ai design canvas: they load its runtime (`support.js`), so they won't render if opened directly in a browser. Read them as the spec for layout, sizes, colours, animations and interactions. Their image paths point at `../assets/`; `design/artifact-asset-ids.json` maps each file back to its upload id on the canvas.
 
@@ -45,3 +46,17 @@ python3 mock.py                  # rough layout preview       -> out/mock-lower.
 ```
 
 To move, resize or turn a part, edit `PLACES` in `parts2.py`: name, centre x, centre y, px per unit, yaw in degrees. Materials, labels and lighting are in `parts2.py` and `render2.py`. If you move the fan, the googly eyes or the disco ball, also update the fan-blade, pupil and sparkle positions in `CameraBuilt.dc.html`; `parts2.py layout` prints the new fan and pupil positions into the manifest.
+
+## Running the app
+
+Needs Node 20 or newer, and the Expo Go app on your phone (App Store or Play Store). No Xcode or Android Studio needed.
+
+```sh
+cd app
+npm install
+npx expo start
+```
+
+Scan the QR code with the iPhone camera, or from inside Expo Go on Android. The phone and the computer must be on the same Wi-Fi; if they can't see each other, run `npx expo start --tunnel` instead.
+
+The app is built with Expo, `expo-camera` for the camera and React Native Skia for the looks. `app/src/looks.ts` converts the design's CSS filters into Skia colour matrices, so the phone matches the canvas. Filtering the live preview (not just the photo) will need VisionCamera, which doesn't run in Expo Go; that step needs a development build through EAS (`npx eas-cli@latest build --profile development`).

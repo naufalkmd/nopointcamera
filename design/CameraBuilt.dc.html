@@ -8,6 +8,7 @@
 <body>
 <x-dc>
 <helmet>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&amp;display=swap" rel="stylesheet">
 <style>
 body{margin:0;background:#050806}
 a{color:#B8F23A}a:hover{color:#D6FF6E}
@@ -49,6 +50,8 @@ a{color:#B8F23A}a:hover{color:#D6FF6E}
 
 <div style="position: absolute; left: 16px; top: 6px; width: 358px; height: 408px; border-radius: 42px 42px 72px 18px; background: #000000; box-shadow: 0 0 0 1.5px rgba(216, 255, 106, 0.35), 0 4px 10px rgba(0, 0, 0, 0.55), inset 0 -1px 0 rgba(255, 255, 255, 0.08)"></div>
 <span aria-hidden="true" style="position: absolute; left: 34px; top: 196px; width: 8px; height: 8px; border-radius: 50%; background: #FF3B2F; box-shadow: 0 0 4px 1px rgba(255, 59, 47, 0.9); opacity: {{ledOpacity}}; animation: np-glow 1.6s ease-in-out infinite; pointer-events: none"></span>
+<div aria-hidden="true" style="position: absolute; left: 125px; top: 20px; width: 140px; height: 26px; box-sizing: border-box; border-radius: 6px; background: #0A1406; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; font-family: 'Silkscreen', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; white-space: nowrap; color: {{readoutColor}}; text-shadow: {{readoutGlow}}; transition: color 0.15s ease, text-shadow 0.15s ease; pointer-events: none">{{readout}}</div>
+<span role="status" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">{{announce}}</span>
 <div style="position: absolute; left: 63px; top: 60px; width: 264px; height: 330px; overflow: hidden; border-radius: 4px; background: #000000">
 <div style="transform: scaleX({{mirror}}); transition: transform 0.35s ease">
 <sc-if value="{{live}}" hint-placeholder-val="{{ true }}">
@@ -76,7 +79,11 @@ a{color:#B8F23A}a:hover{color:#D6FF6E}
 <button type="button" class="np-key" onClick="{{flip}}" aria-label="B: flip camera" style="left: 221px; top: 543px; width: 70px; height: 70px"><img src="../assets/button-ab.png" alt="" style="width: 70px; height: 70px"></button>
 <button type="button" class="np-key" onClick="{{shoot}}" aria-label="A: take a photo" style="left: 287px; top: 497px; width: 70px; height: 70px"><img src="../assets/button-ab.png" alt="" style="width: 70px; height: 70px"></button>
 <button type="button" class="np-key" onClick="{{toggleFlash}}" aria-label="Select: flash" aria-pressed="{{flashPressed}}" style="left: 118px; top: 658px; width: 64px; height: 64px"><img src="../assets/button-select-start.png" alt="" style="width: 64px; height: 64px"></button>
-<a class="np-key" href="Print.dc.html" aria-label="Start: open prints" style="left: 183px; top: 658px; width: 64px; height: 64px"><img src="../assets/button-select-start.png" alt="" style="width: 64px; height: 64px"></a>
+<button type="button" class="np-key" onClick="{{openPrint}}" aria-label="Start: open the latest print" style="left: 183px; top: 658px; width: 64px; height: 64px"><img src="../assets/button-select-start.png" alt="" style="width: 64px; height: 64px"></button>
+<div aria-hidden="true" style="position: absolute; left: 271px; top: 608px; width: 24px; text-align: center; font-family: 'Silkscreen', ui-monospace, monospace; font-size: 15px; line-height: 18px; color: #F2F6E6; text-shadow: 0 1px 1px #000000, 0 0 4px rgba(0, 0, 0, 0.9); pointer-events: none">B</div>
+<div aria-hidden="true" style="position: absolute; left: 337px; top: 562px; width: 24px; text-align: center; font-family: 'Silkscreen', ui-monospace, monospace; font-size: 15px; line-height: 18px; color: #F2F6E6; text-shadow: 0 1px 1px #000000, 0 0 4px rgba(0, 0, 0, 0.9); pointer-events: none">A</div>
+<div aria-hidden="true" style="position: absolute; left: 118px; top: 716px; width: 64px; text-align: center; font-family: 'Silkscreen', ui-monospace, monospace; font-size: 9px; line-height: 12px; letter-spacing: 0.06em; color: #F2F6E6; text-shadow: 0 1px 1px #000000, 0 0 4px rgba(0, 0, 0, 0.9); pointer-events: none">SELECT</div>
+<div aria-hidden="true" style="position: absolute; left: 183px; top: 716px; width: 64px; text-align: center; font-family: 'Silkscreen', ui-monospace, monospace; font-size: 9px; line-height: 12px; letter-spacing: 0.06em; color: #F2F6E6; text-shadow: 0 1px 1px #000000, 0 0 4px rgba(0, 0, 0, 0.9); pointer-events: none">START</div>
 
 <svg aria-hidden="true" width="60" height="76" viewBox="0 0 60 76" style="position: absolute; left: -6px; top: 238px; transform: rotate(-8deg); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 3px 4px rgba(0, 0, 0, 0.3)); pointer-events: none">
 <path d="M30 4 C45 4 56 15 56 30 C56 38 53 44 49 48 L49 60 C49 64 44 64 44 60 L44 52 C41 54 38 55 36 56 L36 68 C36 73 30 73 30 68 L30 57 C26 57 22 56 19 54 L19 62 C19 66 14 66 14 62 L14 50 C8 45 4 38 4 30 C4 15 15 4 30 4 Z" fill="#FFD21E" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round" paint-order="stroke"></path>
@@ -115,27 +122,82 @@ a{color:#B8F23A}a:hover{color:#D6FF6E}
 
 <div style="position: absolute; left: 109px; top: 405px; width: 172px; height: 92px; overflow: hidden">
 <sc-if value="{{even}}" hint-placeholder-val="{{ true }}">
-<a href="Print.dc.html" aria-label="Open the latest print" style="position: absolute; left: 0; top: -139.5px; display: block; width: 172px; height: 235px; animation: np-drop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)">
+<button type="button" onClick="{{openPrint}}" aria-label="Open the latest print" style="position: absolute; left: 0; top: -139.5px; display: block; width: 172px; height: 235px; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; animation: np-drop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)">
 <div style="zoom: 0.5"><dc-import name="Frame" fx="{{lastFx}}" tilt="0" hint-size="344px,469px"></dc-import></div>
-</a>
+</button>
 </sc-if>
 <sc-if value="{{odd}}" hint-placeholder-val="{{ false }}">
-<a href="Print.dc.html" aria-label="Open the latest print" style="position: absolute; left: 0; top: -139.5px; display: block; width: 172px; height: 235px; animation: np-drop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)">
+<button type="button" onClick="{{openPrint}}" aria-label="Open the latest print" style="position: absolute; left: 0; top: -139.5px; display: block; width: 172px; height: 235px; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; animation: np-drop 0.9s cubic-bezier(0.2, 0.8, 0.2, 1)">
 <div style="zoom: 0.5"><dc-import name="Frame" fx="{{lastFx}}" tilt="0" hint-size="344px,469px"></dc-import></div>
-</a>
+</button>
 </sc-if>
 <div aria-hidden="true" style="position: absolute; top: 0; left: 0; width: 172px; height: 10px; background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)); pointer-events: none"></div>
 </div>
+
+<sc-if value="{{printing}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; top: 0; left: 0; width: 390px; height: 844px">
+<dc-import name="Print" fx="{{lastFx}}" on-back="{{closePrint}}" on-fx="{{keepFx}}" hint-size="390px,844px"></dc-import>
+</div>
+</sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
-  renderVals() {
+  shoot() {
     const LOOKS = ['expired', 'infrared', 'riso', 'double', 'bluehour', 'dreamy', 'noir', 'pastel'];
+    const s = this.state || {};
+    if (s.rolling) return;
+    const lastFx = s.lastFx || 'expired';
+    const rest = LOOKS.filter((x) => x !== lastFx);
+    const fx = rest[Math.floor(Math.random() * rest.length)];
+    // The readout and viewfinder flick through looks, slowing down, then land on fx.
+    const reel = [];
+    for (let i = 0; i < 6; i++) {
+      const prev = reel[i - 1] || lastFx;
+      const pool = LOOKS.filter((x) => x !== prev && x !== fx);
+      reel.push(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    reel.push(fx);
+    const delays = [0, 45, 55, 70, 90, 120, 160];
+    const flashOn = s.flashOn ?? true;
+    this.clearTimers();
+    this.setState({ rolling: true, review: reel[0], flashing: flashOn });
+    this.later(() => this.setState({ flashing: false }), 70);
+    let t = 0;
+    reel.forEach((look, i) => {
+      t += delays[i];
+      if (i > 0) this.later(() => this.setState({ review: look }), t);
+    });
+    this.later(() => {
+      const shots = (this.state && this.state.shots) || 0;
+      this.setState({ rolling: false, shots: shots + 1, lastFx: fx });
+    }, t);
+    this.later(() => this.setState({ review: null }), t + 1600);
+  }
+
+  later(fn, ms) {
+    this.timers = this.timers || [];
+    this.timers.push(setTimeout(fn, ms));
+  }
+
+  clearTimers() {
+    (this.timers || []).forEach(clearTimeout);
+    this.timers = [];
+  }
+
+  componentWillUnmount() {
+    this.clearTimers();
+    if (this.tiltFrame) cancelAnimationFrame(this.tiltFrame);
+  }
+
+  renderVals() {
+    const NAMES = { expired: 'EXPIRED', infrared: 'INFRARED', riso: 'RISO', double: 'DOUBLE', bluehour: 'BLUE HOUR', dreamy: 'DREAMY', noir: 'NOIR', pastel: 'PASTEL' };
     const s = this.state || {};
     const shots = s.shots ?? 0;
     const lastFx = s.lastFx || 'expired';
     const review = s.review || null;
+    const rolling = !!s.rolling;
+    const settled = !!review && !rolling;
     const flashOn = s.flashOn ?? true;
     return {
       lastFx,
@@ -144,6 +206,11 @@ class Component extends DCLogic {
       live: !review,
       reviewing: !!review,
       reviewFx: review || 'live',
+      readout: review ? NAMES[review] : 'READY',
+      readoutColor: settled ? '#D8FF6A' : rolling ? '#7FA833' : '#3E5A1C',
+      readoutGlow: settled ? '0 0 6px rgba(184, 242, 58, 0.85)' : 'none',
+      announce: settled ? `Look: ${NAMES[review].toLowerCase()}` : '',
+      printing: !!s.printing,
       mirror: s.mirrored ? -1 : 1,
       bx: +(-(s.px ?? 0) * 12).toFixed(2),
       by: +(-(s.py ?? 0) * 12).toFixed(2),
@@ -152,6 +219,7 @@ class Component extends DCLogic {
       flashOpacity: s.flashing ? 1 : 0,
       flashTransition: s.flashing ? 'none' : 'opacity 0.5s ease-out',
       tiltMove: (e) => {
+        if (s.printing) return;
         const r = e.currentTarget.getBoundingClientRect();
         const px = (e.clientX - r.left) / r.width - 0.5;
         const py = (e.clientY - r.top) / r.height - 0.5;
@@ -162,16 +230,12 @@ class Component extends DCLogic {
         });
       },
       tiltReset: () => this.setState({ px: 0, py: 0 }),
-      shoot: () => {
-        const rest = LOOKS.filter((x) => x !== lastFx);
-        const fx = rest[Math.floor(Math.random() * rest.length)];
-        this.setState({ shots: shots + 1, lastFx: fx, review: fx, flashing: flashOn });
-        setTimeout(() => this.setState({ flashing: false }), 70);
-        clearTimeout(this.reviewTimer);
-        this.reviewTimer = setTimeout(() => this.setState({ review: null }), 1600);
-      },
+      shoot: () => this.shoot(),
       flip: () => this.setState({ mirrored: !s.mirrored }),
-      toggleFlash: () => this.setState({ flashOn: !flashOn })
+      toggleFlash: () => this.setState({ flashOn: !flashOn }),
+      openPrint: () => this.setState({ printing: true, px: 0, py: 0 }),
+      closePrint: () => this.setState({ printing: false }),
+      keepFx: (fx) => this.setState({ lastFx: fx })
     };
   }
 }

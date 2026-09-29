@@ -34,10 +34,18 @@ a{color:#B8F23A}a:hover{color:#D6FF6E}
 <img src="../assets/button-select-start.png" alt="" style="width: 96px; height: 96px">
 <span style="margin-top: -10px; font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #9FA3AE">AGAIN</span>
 </button>
+<sc-if value="{{hasBack}}" hint-placeholder-val="{{ false }}">
+<button type="button" class="np-key" onClick="{{back}}" aria-label="B: back to camera" style="position: absolute; left: 172px; top: 34px">
+<img src="../assets/button-ab.png" alt="" style="width: 78px; height: 78px">
+<span style="font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #9FA3AE">BACK</span>
+</button>
+</sc-if>
+<sc-if value="{{noBack}}" hint-placeholder-val="{{ true }}">
 <a href="CameraBuilt.dc.html" class="np-key" aria-label="B: back to camera" style="position: absolute; left: 172px; top: 34px">
 <img src="../assets/button-ab.png" alt="" style="width: 78px; height: 78px">
 <span style="font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #9FA3AE">BACK</span>
 </a>
+</sc-if>
 <button type="button" class="np-key" aria-label="A: share" style="position: absolute; left: 254px; top: 4px">
 <img src="../assets/button-ab.png" alt="" style="width: 78px; height: 78px">
 <span style="font-size: 10px; font-style: italic; font-weight: 800; letter-spacing: 0.16em; color: #B8F23A">SHARE</span>
@@ -45,17 +53,24 @@ a{color:#B8F23A}a:hover{color:#D6FF6E}
 </div>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"fx":{"editor":"enum","options":["expired","infrared","riso","double","bluehour","dreamy","noir","pastel"],"default":"expired"},"onBack":{"editor":null},"onFx":{"editor":null},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const LOOKS = ['expired', 'infrared', 'riso', 'double', 'bluehour', 'dreamy', 'noir', 'pastel'];
     const s = this.state || {};
-    const fx = s.fx || 'expired';
+    // Opened from the camera, fx is the shot just taken; AGAIN hands the new look back to it.
+    const fx = s.fx || this.props.fx || 'expired';
+    const onBack = this.props.onBack;
     return {
       fx,
+      hasBack: !!onBack,
+      noBack: !onBack,
+      back: () => onBack && onBack(),
       reroll: () => {
         const rest = LOOKS.filter((x) => x !== fx);
-        this.setState({ fx: rest[Math.floor(Math.random() * rest.length)] });
+        const next = rest[Math.floor(Math.random() * rest.length)];
+        this.setState({ fx: next });
+        if (this.props.onFx) this.props.onFx(next);
       }
     };
   }
